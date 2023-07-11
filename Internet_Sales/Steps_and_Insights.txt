@@ -1,0 +1,233 @@
+//DATA CLEANING AND TRANSFORMATION using the SQL Server
+
+Steps I took in cleasing th data.
+		//Dim_Calender
+For Dim calender I commented some queries out and pick the ones that was needed base on the  project I was to carry out. and I added some new lines of queries.
+
+		//Dim_Customer  join with Geography
+Dim_Customers I used case statement to replace the M with Male and F with Female and Gender as the heading.
+To do some cleaning  I also used left join in the  customer city. 
+I used Customer key to connect to the Fact table
+The geography table will also enable us to know where are customers are located.
+
+dbo.dimcustomer was renamed to c and dbo.dimgeography renamed to g. (alias)
+
+
+			//DIM PRODUCTS
+I joined two sub category and category because I might be interested in looking at sales per sub category or per  and main category and he wants to look at it in different ways.
+
+ISNULL  means when it is NULL replaced with Outdated.
+
+
+		//DIM FACT TABLE
+
+
+LEFT (OrderDateKey, 4) >= YEAR(GETDATE()) -2
+
+So what the query above  means is that the first four numbers in the ORDER DATE KEY column should be Extracted and I was  to looking at two years from the date of extraction.
+
+
+			//INSIGHTS
+ 
+
+Data Cleasing nd Transformation (SQL)
+
+To create the necessary data model for doing analysis and fulfilling the business needs and telling a story through the data.
+Below are the SQL statements for cleasing and transforming necessary data.
+
+DIM_Calender:
+
+--Cleansed DIM_DateTable
+SELECT 
+		[DateKey],
+      [FullDateAlternateKey] AS Date,
+      --,[DayNumberOfWeek]
+      [EnglishDayNameOfWeek] AS Day,
+      --,[SpanishDayNameOfWeek]
+      --,[FrenchDayNameOfWeek]
+      --,[DayNumberOfMonth]
+      --,[DayNumberOfYear]
+      [WeekNumberOfYear] AS WeekNum,
+	  [EnglishMonthName] AS Month,
+      LEFT([EnglishMonthName], 3) AS Monthshort,
+      --,[SpanishMonthName]
+      --,[FrenchMonthName]
+      [MonthNumberOfYear] AS MonthNum,
+      [CalendarQuarter] AS Quarter,
+      [CalendarYear] AS Year
+      --,[CalendarSemester]
+      --,[FiscalQuarter]
+      --,[FiscalYear]
+      --,[FiscalSemester]
+  FROM 
+  [AdventureWorksDW2019].[dbo].[DimDate]
+
+  WHERE CalendarYear >= 2019
+
+DIM_Customers:
+
+--Cleaasned DIM_Customers Table
+SELECT 
+ c.CustomerKey  AS [Customer Key],
+      --,[GeographyKey]
+      --,[CustomerAlternateKey]
+      --,[Title]
+ c.firstname AS [First Name],
+      --,[MiddleName]
+ c.lastname AS [Last Name],
+ c.firstname + ' ' + lastname AS [Full Name],
+	--Combined First and Last Name
+      --,[NameStyle]
+      --,[BirthDate]
+      --,[MaritalStatus]
+      --,[Suffix]
+ CASE c.gender WHEN 'M' THEN 'Male' WHEN 'F' THEN 'Female' END AS Gender,
+      --,[EmailAddress]
+      --,[YearlyIncome]
+      --,[TotalChildren]
+      --,[NumberChildrenAtHome]
+      --,[EnglishEducation]
+      --,[SpanishEducation]
+      --,[FrenchEducation]
+      --,[EnglishOccupation]
+      --,[SpanishOccupation]
+      --,[FrenchOccupation]
+      --,[HouseOwnerFlag]
+      --,[NumberCarsOwned]
+      --,[AddressLine1]
+      --,[AddressLine2]
+      --,[Phone]
+ c.datefirstpurchase AS [Date Of First Purchase],
+	  --,[CommuteDistance]
+ g.city AS [Customer City] --Joined in Customer City from Geography Table
+ FROM
+		dbo.dimcustomer AS c
+	LEFT JOIN dbo.dimgeography AS g On g.geographyKey = c. geographyKey
+ ORDER BY
+ CustomerKey ASC --Ordered List By Customers
+  
+
+DIM_Products
+
+--Cleasned DIM_Products Tables--
+SELECT
+  p.[ProductKey],
+  p.[ProductAlternateKey] AS [Product Item Code],
+  --	,[ProductSubcategoryKey]
+  --    ,[WeightUnitMeasureCode]
+  --    ,[SizeUnitMeasureCode]
+  p.[EnglishProductName] AS [Product Name],
+  ps.EnglishProductSubCategoryName AS [Sub Category], --Joined in from sub category table
+  pc.EnglishProductCategoryName As [Product Category], -- Joined in from category table
+  --    ,[SpanishProductName]
+  --    ,[FrenchProductName]
+  --    ,[StandardCost]
+  --    ,[FinishedGoodsFlag]
+  p.[Color]  AS [Product Color],
+  --    ,[SafetyStockLevel]
+  --    ,[ReorderPoint]
+  --    ,[ListPrice]
+  p.[Size] AS [Product Size],
+  --   ,[SizeRange]
+  --    ,[Weight]
+  --    ,[DaysToManufacture]
+  p.[ProductLine] AS [Product Line],
+  --    ,[DealerPrice]
+  --    ,[Class]
+  --    ,[Style]
+  p.[ModelName] As [Product Model Name],
+  --    ,[LargePhoto]
+  p.[EnglishDescription] AS [Product Description],
+  --    ,[FrenchDescription]
+  --    ,[ChineseDescription]
+  --    ,[ArabicDescription]
+  --  ,[HebrewDescription]
+  --    ,[ThaiDescription]
+  --    ,[GermanDescription]
+  --    ,[JapaneseDescription]
+  --    ,[TurkishDescription]
+  --    ,[StartDate]
+  --    ,[EndDate]
+  ISNULL (p.Status, 'Outdated') AS [Product Status]
+ FROM 
+	[dbo].[DimProduct] as p
+	LEFT JOIN dbo.DimProductSubCategory AS ps ON ps.ProductSubcategoryKey = p.ProductSubcategoryKey
+	LEFT JOIN dbo.DimProductCategory AS pc ON ps.ProductCategoryKey = pc.ProductCategoryKey
+ ORDER BY
+	p.ProductKey ASC
+
+
+
+
+DIM_FACT_INTERNET_SALES
+
+
+--Cleansed Dim_Fact_Internet_Sales Table
+SELECT 
+	f.[ProductKey] AS [Product Key],
+	f.[OrderDateKey] AS [Order Date Key],
+    f.[DueDateKey] AS  [Due Date Key],
+    f.[ShipDateKey] AS [Ship Date Key],
+    f.[CustomerKey] AS [Customer Key],
+	--   [PromotionKey]
+    --  ,[CurrencyKey]
+    --  ,[SalesTerritoryKey]
+    f.[SalesOrderNumber] AS [Sales Order Number],
+    --  ,[SalesOrderLineNumber]
+    --  ,[RevisionNumber]
+    --  ,[OrderQuantity]
+    --  ,[UnitPrice]
+    --  ,[ExtendedAmount]
+    --  ,[UnitPriceDiscountPct]
+    --  ,[DiscountAmount]
+    --  ,[ProductStandardCost]
+    --  ,[TotalProductCost]
+    f.[SalesAmount] AS [Sales Amount]
+    --  ,[TaxAmt]
+    --  ,[Freight]
+    --  ,[CarrierTrackingNumber]
+    --  ,[CustomerPONumber]
+    --  ,[OrderDate]
+    --  ,[DueDate]
+    --  ,[ShipDate]
+  FROM 
+  [dbo].[FactInternetSales] AS f
+  WHERE 
+  LEFT (OrderDateKey, 4) >= YEAR(GETDATE()) -2 -- Ensures we always only brings two years of date from Extraction
+  ORDER BY 
+  f.OrderDateKey ASC
+
+
+
+
+INSIGHTS:
+
+The dashboard focused on combinig tables for necessary details and visualizations to show sales overtime, sales per customers and per product. 
+It shows a dashboard overview of sales and help to track products and sales made over a period of time, the profit, loss and the year with the highest sales which was 2021. 
+The dashboard also let yoou filter data for each customer, product, city.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
